@@ -13,35 +13,41 @@ from app.resolvers import (
     resolve_delete_product,
 )
 
-# Cargar variables de entorno
+# Load environment variables
 load_dotenv()
 SERVER_PORT = int(os.getenv("SERVER_PORT", 5000))
 
-# Configuración de la aplicación Flask
+# Flask app configuration
 app = Flask(__name__)
-CORS(app)  # Habilitar CORS
+CORS(app)  # Enable CORS for cross-origin requests
 
-# Crear objetos QueryType y MutationType
+# Create QueryType and MutationType objects for handling GraphQL queries and mutations
 query = QueryType()
 mutation = MutationType()
 
-# Asignar resolvers a las consultas y mutaciones
+# Assign resolvers to queries and mutations
 query.set_field("getProduct", resolve_get_product)
 query.set_field("listProducts", resolve_list_products)
 mutation.set_field("createProduct", resolve_create_product)
 mutation.set_field("updateProduct", resolve_update_product)
 mutation.set_field("deleteProduct", resolve_delete_product)
 
-# Crear el esquema ejecutable
+# Create the executable schema using the type definitions and resolvers
 schema = make_executable_schema(type_defs, query, mutation)
 
+# Define the GraphQL endpoint
 @app.route("/graphql", methods=["POST"])
 def graphql_server():
+    # Parse the incoming request
     data = request.get_json()
+    # Execute the GraphQL query/mutation
     success, result = graphql_sync(schema, data, context_value=request, debug=True)
+    # Determine the status code based on success or failure
     status_code = 200 if success else 400
     return jsonify(result), status_code
 
 if __name__ == "__main__":
-    print(f"Servidor ejecutándose en: http://localhost:{SERVER_PORT}/graphql")
+    # Print the server URL for easier access
+    print(f"Server running at: http://localhost:{SERVER_PORT}/graphql")
+    # Run the Flask application
     app.run(port=SERVER_PORT)

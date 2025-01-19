@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Configuration
@@ -36,6 +37,8 @@ public class PostgresqlConfig {
                 .username("admin")
                 .password(passwordEncoder.encode("Admin123@"))
                 .role(Role.VENDOR)
+                .createdAt(LocalDateTime.now())
+                .phoneNumber("0978624884")
                 .accountLocked(false)
                 .enabled(true)
                 .build();

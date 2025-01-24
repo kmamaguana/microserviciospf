@@ -2,18 +2,13 @@ package com.projectfinal.loginfashionhub.service.impl;
 
 import com.projectfinal.loginfashionhub.jwt.JwtUtils;
 import com.projectfinal.loginfashionhub.model.User;
-import com.projectfinal.loginfashionhub.model.Role;
 import com.projectfinal.loginfashionhub.repository.UserRepository;
 import com.projectfinal.loginfashionhub.request.LoginRequest;
-import com.projectfinal.loginfashionhub.request.RegisterRequest;
 import com.projectfinal.loginfashionhub.response.AuthResponse;
 import com.projectfinal.loginfashionhub.service.AuthService;
-import com.projectfinal.loginfashionhub.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.LockedException;
@@ -30,7 +25,6 @@ import java.time.LocalDateTime;
 public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
-    private final UserService userService;
     private final JwtUtils jwtService;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
@@ -70,23 +64,6 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
-    @Override
-    public ResponseEntity<AuthResponse> register(RegisterRequest request) {
-        try {
-            User newUser = createNewUser(request);
-            userRepository.save(newUser);
-
-            String token = jwtService.generateToken(newUser.getUsername(), newUser.getRole().name());
-
-            return ResponseEntity.ok(AuthResponse.builder()
-                    .token(token)
-                    .build());
-        } catch (Exception e) {
-            logger.error("Error durante el registro de usuario", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
-
     private User findUserByUsernameOrEmail(String usernameOrEmail) {
         return userRepository.findByEmail(usernameOrEmail)
                 .or(() -> userRepository.findByUsername(usernameOrEmail))
@@ -97,10 +74,6 @@ public class AuthServiceImpl implements AuthService {
         if (user.isAccountLocked()) {
             logger.warn("Cuenta bloqueada para el usuario: {}", user.getUsername());
             throw new LockedException(ACCOUNT_LOCKED);
-        }
-
-        if (user.getScheduledForDeletion() != null) {
-            userService.cancelAccountDeletion(user.getUsername());
         }
     }
 
@@ -122,20 +95,5 @@ public class AuthServiceImpl implements AuthService {
         }
 
         userRepository.save(user);
-    }
-
-    private User createNewUser(RegisterRequest request) {
-        return User.builder()
-                .nombre(request.getNombre())
-                .apellido(request.getApellido())
-                .email(request.getEmail())
-                .username(request.getUsername())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .role(Role.CUSTOMER)
-                .accountLocked(false)
-                .enabled(true)
-                .failedLoginAttempts(0)
-                .createdAt(LocalDateTime.now())
-                .build();
     }
 }

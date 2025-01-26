@@ -167,4 +167,3 @@ Todos los servicios pueden integrarse a través de un API Gateway para simplific
 
 Este proyecto está bajo la licencia [MIT](https://opensource.org/licenses/MIT).
 
-##Hola Mundo

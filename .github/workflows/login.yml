@@ -14,7 +14,7 @@ on:
 
 jobs:
   build-and-push:
-    name: Build and Push Docker Image
+    name: Build, Package, and Push Docker Image
     runs-on: ubuntu-latest
 
     steps:
@@ -22,21 +22,56 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 2. Obtener información del commit para versiones
-      - name: Extract version from Git
-        id: vars
+      # 2. Configurar variables de entorno desde el archivo .env
+      - name: Load environment variables
         run: |
-          echo "commit_sha=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-          echo "version_tag=$(date +'%Y%m%d')-${{ github.run_number }}" >> $GITHUB_ENV
+          cp user/login/.env .env
+          echo "Environment variables loaded:"
+          cat .env
+        env:
+          APP_NAME: ${{ secrets.APP_NAME_LOGIN }}
+          SERVER_PORT: ${{ secrets.SERVER_PORT_LOGIN }}
+          DB_URL: ${{ secrets.DB_URL }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_DRIVER: ${{ secrets.DB_DRIVER }}
+          DB_CONNECTION_TIMEOUT: ${{ secrets.DB_CONNECTION_TIMEOUT }}
+          DB_MAX_POOL_SIZE: ${{ secrets.DB_MAX_POOL_SIZE }}
+          JPA_DDL_AUTO: ${{ secrets.JPA_DDL_AUTO }}
+          JPA_SHOW_SQL: ${{ secrets.JPA_SHOW_SQL }}
+          JPA_OPEN_IN_VIEW: ${{ secrets.JPA_OPEN_IN_VIEW }}
+          JPA_DATABASE_PLATFORM: ${{ secrets.JPA_DATABASE_PLATFORM }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          JWT_EXPIRATION: ${{ secrets.JWT_EXPIRATION }}
+          DOMINIO_URL: ${{ secrets.DOMINIO_URL }}
 
-      # 3. Log in en DockerHub
+      # 3. Instalar JDK y Maven
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      # 4. Construir el archivo .jar con Maven
+      - name: Build .jar file
+        run: mvn clean install -f user/login/pom.xml
+
+      # 5. Log in en DockerHub
       - name: Log in to DockerHub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # 4. Construir y subir la imagen Docker a DockerHub
+      # 6. Construir y subir la imagen Docker a DockerHub
       - name: Build and push Docker image
         run: |
           docker build user/login/. --file user/login/Dockerfile --tag ${{ secrets.DOCKER_USERNAME }}/login-service:${{ env.version_tag }} --tag ${{ secrets.DOCKER_USERNAME }}/login-service:latest

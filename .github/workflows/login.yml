@@ -93,14 +93,20 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           port: 22
           script: |
-            sudo yum update -y
-            sudo yum install -y docker
-            sudo service docker start
-            sudo usermod -a -G docker ec2-user
-
-            # Descargar la imagen Docker desde DockerHub
-            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/login-service:latest
-
-            # Detener cualquier contenedor existente y desplegar el nuevo
-            sudo docker ps -q --filter "name=login-service" | grep -q . && sudo docker stop login-service && sudo docker rm login-service || true
-            sudo docker run -d --name login-service -p 80:80 ${{ secrets.DOCKER_USERNAME }}/login-service:latest
+                # Actualizar y configurar Docker
+                sudo yum update -y
+                sudo yum install -y docker
+                sudo service docker start
+                sudo usermod -a -G docker ec2-user
+              
+                # Descargar la imagen Docker desde DockerHub
+                sudo docker pull ${{ secrets.DOCKER_USERNAME }}/login-service:latest
+              
+                # Detener y eliminar cualquier contenedor existente con el nombre "login-service"
+                if [ $(sudo docker ps -aq -f name=login-service) ]; then
+                  sudo docker stop login-service
+                  sudo docker rm login-service
+                fi
+              
+                # Iniciar un nuevo contenedor con la imagen más reciente
+                sudo docker run -d --name login-service -p 80:80 ${{ secrets.DOCKER_USERNAME }}/login-service:latest

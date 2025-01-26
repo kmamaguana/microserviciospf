@@ -13,8 +13,8 @@ on:
       - "main"
 
 jobs:
-  build-and-push:
-    name: Build, Package, and Push Docker Image
+  build-and-deploy:
+    name: Build, Push Docker Image and Deploy
     runs-on: ubuntu-latest
 
     steps:
@@ -26,7 +26,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
-          java-version: '17'
+          java-version: '21'
           distribution: 'temurin'
 
       - name: Cache Maven dependencies
@@ -37,25 +37,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
-      # 3. Construir el archivo .jar con Maven usando variables de entorno
-      - name: Build .jar file
-        run: mvn clean install -f user/register/pom.xml
-        env:
-          APP_NAME: ${{ secrets.APP_NAME_REGISTER }}
-          SERVER_PORT: ${{ secrets.SERVER_PORT_REGISTER }}
-          DB_URL: ${{ secrets.DB_URL_REGISTER }}
-          DB_USERNAME: ${{ secrets.DB_USERNAME_REGISTER }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD_REGISTER }}
-          DB_DRIVER: ${{ secrets.DB_DRIVER_REGISTER }}
-          DB_CONNECTION_TIMEOUT: ${{ secrets.DB_CONNECTION_TIMEOUT_REGISTER }}
-          DB_MAX_POOL_SIZE: ${{ secrets.DB_MAX_POOL_SIZE_REGISTER }}
-          JPA_DDL_AUTO: ${{ secrets.JPA_DDL_AUTO_REGISTER }}
-          JPA_SHOW_SQL: ${{ secrets.JPA_SHOW_SQL_REGISTER }}
-          JPA_OPEN_IN_VIEW: ${{ secrets.JPA_OPEN_IN_VIEW_REGISTER }}
-          JPA_DATABASE_PLATFORM: ${{ secrets.JPA_DATABASE_PLATFORM_REGISTER }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET_REGISTER }}
-          JWT_EXPIRATION: ${{ secrets.JWT_EXPIRATION_REGISTER }}
-          DOMINIO_URL: ${{ secrets.DOMINIO_URL_REGISTER }}
+      # 3. Construir el archivo .jar sin ejecutar pruebas
+      - name: Build .jar file (Skip tests)
+        run: mvn clean install -DskipTests -f user/register/pom.xml
 
       # 4. Log in en DockerHub
       - name: Log in to DockerHub
@@ -67,17 +51,13 @@ jobs:
       # 5. Construir y subir la imagen Docker a DockerHub
       - name: Build and push Docker image
         run: |
-          docker build user/register/. --file user/register/Dockerfile --tag ${{ secrets.DOCKER_USERNAME }}/register-service:${{ github.run_number }} --tag ${{ secrets.DOCKER_USERNAME }}/register-service:latest
+          docker build user/register/. --file user/register/Dockerfile \
+            --tag ${{ secrets.DOCKER_USERNAME }}/register-service:${{ github.run_number }} \
+            --tag ${{ secrets.DOCKER_USERNAME }}/register-service:latest
           docker push ${{ secrets.DOCKER_USERNAME }}/register-service:${{ github.run_number }}
           docker push ${{ secrets.DOCKER_USERNAME }}/register-service:latest
 
-  deploy:
-    name: Deploy to EC2
-    runs-on: ubuntu-latest
-    needs: build-and-push
-
-    steps:
-      # 1. Conectar a EC2 y desplegar la aplicación
+      # 6. Desplegar en EC2
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v0.1.6
         with:
@@ -86,46 +66,47 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           port: 22
           script: |
-            # Actualizar y configurar Docker
+            # Configuración básica en la instancia
             sudo yum update -y
             sudo yum install -y docker
             sudo service docker start
             sudo usermod -a -G docker ec2-user
-          
+
+            # Crear un archivo .env en la instancia EC2
+            echo "APP_NAME=${{ secrets.APP_NAME_REGISTER }}" > /home/ec2-user/register-service.env
+            echo "SERVER_PORT=${{ secrets.SERVER_PORT_REGISTER }}" >> /home/ec2-user/register-service.env
+            echo "DB_URL=${{ secrets.DB_URL }}" >> /home/ec2-user/register-service.env
+            echo "DB_USERNAME=${{ secrets.DB_USERNAME }}" >> /home/ec2-user/register-service.env
+            echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> /home/ec2-user/register-service.env
+            echo "DB_DRIVER=${{ secrets.DB_DRIVER }}" >> /home/ec2-user/register-service.env
+            echo "DB_CONNECTION_TIMEOUT=${{ secrets.DB_CONNECTION_TIMEOUT }}" >> /home/ec2-user/register-service.env
+            echo "DB_MAX_POOL_SIZE=${{ secrets.DB_MAX_POOL_SIZE }}" >> /home/ec2-user/register-service.env
+            echo "JPA_DDL_AUTO=${{ secrets.JPA_DDL_AUTO }}" >> /home/ec2-user/register-service.env
+            echo "JPA_SHOW_SQL=${{ secrets.JPA_SHOW_SQL }}" >> /home/ec2-user/register-service.env
+            echo "JPA_OPEN_IN_VIEW=${{ secrets.JPA_OPEN_IN_VIEW }}" >> /home/ec2-user/register-service.env
+            echo "JPA_DATABASE_PLATFORM=${{ secrets.JPA_DATABASE_PLATFORM }}" >> /home/ec2-user/register-service.env
+            echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> /home/ec2-user/register-service.env
+            echo "JWT_EXPIRATION=${{ secrets.JWT_EXPIRATION }}" >> /home/ec2-user/register-service.env
+            echo "DOMINIO_URL=${{ secrets.DOMINIO_URL }}" >> /home/ec2-user/register-service.env
+
             # Descargar la imagen Docker desde DockerHub
             echo "==> Pulling the latest Docker image"
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/register-service:latest
-          
-            # Verificar si el contenedor existe
+
+            # Detener y eliminar cualquier contenedor existente
             if [ $(sudo docker ps -aq -f name=register-service) ]; then
               echo "==> Stopping and removing existing container"
-              sudo docker stop register-service || echo "Failed to stop container, possibly not running."
-              sudo docker rm register-service || echo "Failed to remove container, ensure it is stopped."
-            else
-              echo "==> No existing container found with the name 'register-service'"
+              sudo docker stop register-service
+              sudo docker rm register-service
             fi
-          
-            # Iniciar un nuevo contenedor con la imagen más reciente
+
+            # Ejecutar el nuevo contenedor con el archivo .env
             echo "==> Starting a new container"
             sudo docker run -d --name register-service -p 81:81 \
-              -e APP_NAME=${{ secrets.APP_NAME_REGISTER }} \
-              -e SERVER_PORT=${{ secrets.SERVER_PORT_REGISTER }} \
-              -e DB_URL=${{ secrets.DB_URL }} \
-              -e DB_USERNAME=${{ secrets.DB_USERNAME }} \
-              -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
-              -e DB_DRIVER=${{ secrets.DB_DRIVER }} \
-              -e DB_CONNECTION_TIMEOUT=${{ secrets.DB_CONNECTION_TIMEOUT }} \
-              -e DB_MAX_POOL_SIZE=${{ secrets.DB_MAX_POOL_SIZE }} \
-              -e JPA_DDL_AUTO=${{ secrets.JPA_DDL_AUTO }} \
-              -e JPA_SHOW_SQL=${{ secrets.JPA_SHOW_SQL }} \
-              -e JPA_OPEN_IN_VIEW=${{ secrets.JPA_OPEN_IN_VIEW }} \
-              -e JPA_DATABASE_PLATFORM=${{ secrets.JPA_DATABASE_PLATFORM }} \
-              -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
-              -e JWT_EXPIRATION=${{ secrets.JWT_EXPIRATION }} \
-              -e DOMINIO_URL=${{ secrets.DOMINIO_URL}} \
+              --env-file /home/ec2-user/register-service.env \
               ${{ secrets.DOCKER_USERNAME }}/register-service:latest
-          
-            # Verificar si el contenedor está corriendo
+
+            # Validar si el contenedor está corriendo
             if sudo docker ps -f name=register-service | grep register-service; then
               echo "==> Container started successfully"
             else

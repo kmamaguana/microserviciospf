@@ -1,0 +1,98 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Products API",
+    "version": "1.0.0",
+    "description": "API para gestionar productos utilizando Swagger y GraphQL. Esta API permite crear productos con detalles específicos como nombre, precio, descripción, y más.",
+    "termsOfService": "https://example.com/terms",
+    "contact": {
+      "name": "Support Team",
+      "email": "support@example.com",
+      "url": "https://example.com/support"
+    },
+    "license": {
+      "name": "Apache 2.0",
+      "url": "https://www.apache.org/licenses/LICENSE-2.0.html"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3005",
+      "description": "Servidor local de desarrollo"
+    }
+  ],
+  "paths": {
+    "/graphql": {
+      "post": {
+        "tags": ["GraphQL"],
+        "summary": "Ejecutar una mutación GraphQL",
+        "description": "Envía una mutación para crear un nuevo producto.",
+        "operationId": "createProduct",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "example": "mutation CreateProduct {\ncreateProduct(name:\"Camiseta deportiva\", price: 19.99, description: \"Camiseta 100% algodón\") {\n        id\n        name\n        description\n        price\n        stock\n        color\n        size\n        material\n        brand\n        gender\n    }\n}"
+                  }
+                },
+                "required": ["query"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Respuesta exitosa",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "createProduct": {
+                          "type": "object",
+                          "properties": {
+                            "id": { "type": "string", "example": "12345" },
+                            "name": { "type": "string", "example": "Camiseta deportiva" },
+                            "description": { "type": "string", "example": "Camiseta 100% algodón" },
+                            "price": { "type": "number", "example": 19.99 },
+                            "stock": { "type": "integer", "example": 100 },
+                            "color": { "type": "string", "example": "Rojo" },
+                            "size": { "type": "string", "example": "M" },
+                            "material": { "type": "string", "example": "Algodón" },
+                            "brand": { "type": "string", "example": "Nike" },
+                            "gender": { "type": "string", "example": "Unisex" }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error en la solicitud",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": { "type": "string", "example": "The query must be a string." }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

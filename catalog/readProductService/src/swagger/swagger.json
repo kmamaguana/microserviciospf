@@ -1,0 +1,177 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "GraphQL Product Service API",
+    "description": "This API allows you to interact with the Product database using GraphQL. You can fetch product details, execute queries, and mutations with the GraphQL endpoint.",
+    "version": "1.1.0",
+    "termsOfService": "https://example.com/terms",
+    "contact": {
+      "name": "Developer Support",
+      "email": "support@example.com",
+      "url": "https://example.com/support"
+    },
+    "license": {
+      "name": "MIT License",
+      "url": "https://opensource.org/licenses/MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3006/graphql",
+      "description": "Local development server"
+    },
+    {
+      "url": "https://api.example.com/graphql",
+      "description": "Production server"
+    }
+  ],
+  "paths": {
+    "/graphql": {
+      "post": {
+        "summary": "Execute GraphQL queries or mutations",
+        "description": "Send a GraphQL query or mutation string to the GraphQL endpoint.",
+        "requestBody": {
+          "description": "GraphQL query or mutation string with optional variables.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "GraphQL query or mutation string.",
+                    "example": "{ listProducts { id name price } }"
+                  },
+                  "variables": {
+                    "type": "object",
+                    "description": "Optional variables for the query or mutation.",
+                    "example": { "id": "1" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful GraphQL response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GraphQLResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request due to invalid GraphQL syntax or missing required fields.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/BadRequestResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error due to an unexpected issue.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/InternalServerError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Product": {
+        "type": "object",
+        "description": "A single product in the database.",
+        "properties": {
+          "id": { "type": "string", "description": "The unique identifier of the product." },
+          "name": { "type": "string", "description": "The name of the product." },
+          "description": { "type": "string", "description": "A detailed description of the product." },
+          "price": { "type": "number", "description": "The price of the product in USD." },
+          "stock": { "type": "integer", "description": "The quantity of the product in stock." },
+          "color": { "type": "string", "description": "The color of the product." },
+          "size": { "type": "string", "description": "The size of the product." },
+          "material": { "type": "string", "description": "The material of the product." },
+          "brand": { "type": "string", "description": "The brand of the product." },
+          "gender": { "type": "string", "description": "The target gender for the product." }
+        }
+      },
+      "GraphQLResponse": {
+        "type": "object",
+        "description": "The standard structure of a GraphQL response.",
+        "properties": {
+          "data": {
+            "type": "object",
+            "description": "The result of the GraphQL query or mutation.",
+            "properties": {
+              "listProducts": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Product"
+                },
+                "description": "An array of products returned by the query."
+              }
+            }
+          }
+        },
+        "example": {
+          "data": {
+            "listProducts": [
+              { "id": "1", "name": "Product A", "price": 100 },
+              { "id": "2", "name": "Product B", "price": 200 }
+            ]
+          }
+        }
+      }
+    },
+    "responses": {
+      "BadRequestResponse": {
+        "type": "object",
+        "description": "Error response for invalid GraphQL syntax or missing required fields.",
+        "properties": {
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "example": "Invalid GraphQL query syntax."
+                }
+              }
+            }
+          },
+          "data": { "type": "null", "example": null }
+        }
+      },
+      "InternalServerError": {
+        "type": "object",
+        "description": "Error response for unexpected server issues.",
+        "properties": {
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "example": "Internal server error."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

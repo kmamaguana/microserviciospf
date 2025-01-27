@@ -1,5 +1,3 @@
-# Hola
-
 # RegisterFashionHub 📝
 
 ## Description

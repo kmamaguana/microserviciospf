@@ -1,4 +1,3 @@
-# Prueba no me acuerdo xD KIMM
 # LoginFashionHub
 
 ## Descripción

@@ -1,5 +1,3 @@
-# Hola
-
 # 🔑 PasswordForgotFashionHub
 
 ## 📝 Descripción

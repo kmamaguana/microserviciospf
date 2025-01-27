@@ -36,9 +36,27 @@ jobs:
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-maven-
+            
       # 3. Construir el archivo .jar sin ejecutar pruebas
       - name: Build .jar file (Skip tests)
         run: mvn clean install -DskipTests -f user/login/pom.xml
+        env:
+          # Variables comunes
+          APP_NAME: ${{ secrets.APP_NAME_PASSWORD_FORGOT }}
+          SERVER_PORT: ${{ secrets.SERVER_PORT_PASSWORD_FORGOT }}
+          DB_URL: ${{ secrets.DB_URL }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_DRIVER: ${{ secrets.DB_DRIVER }}
+          DB_CONNECTION_TIMEOUT: ${{ secrets.DB_CONNECTION_TIMEOUT }}
+          DB_MAX_POOL_SIZE: ${{ secrets.DB_MAX_POOL_SIZE }}
+          JPA_DDL_AUTO: ${{ secrets.JPA_DDL_AUTO }}
+          JPA_SHOW_SQL: ${{ secrets.JPA_SHOW_SQL }}
+          JPA_OPEN_IN_VIEW: ${{ secrets.JPA_OPEN_IN_VIEW }}
+          JPA_DATABASE_PLATFORM: ${{ secrets.JPA_DATABASE_PLATFORM }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          JWT_EXPIRATION: ${{ secrets.JWT_EXPIRATION }}
+          DOMINIO_URL: ${{ secrets.DOMINIO_URL }}
 
       # 4. Log in en DockerHub
       - name: Log in to DockerHub
@@ -55,20 +73,25 @@ jobs:
             --tag ${{ secrets.DOCKER_USERNAME }}/login-service:latest
           docker push ${{ secrets.DOCKER_USERNAME }}/login-service:${{ github.run_number }}
           docker push ${{ secrets.DOCKER_USERNAME }}/login-service:latest
+
       # 6. Desplegar en EC2
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v0.1.6
         with:
-          host: ${{ secrets.EC2_HOST }}
+          host: ${{ secrets.EC2_HOST_LOGIN }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           port: 22
           script: |
-            # Configuración básica en la instancia
-            sudo yum update -y
-            sudo yum install -y docker
-            sudo service docker start
-            sudo usermod -a -G docker ec2-user
+            # Verificar si Docker está instalado
+            if ! command -v docker &> /dev/null; then
+              echo "==> Installing Docker"
+              sudo yum update -y
+              sudo yum install -y docker
+              sudo service docker start
+              sudo usermod -a -G docker ec2-user
+            fi
+
             # Crear un archivo .env en la instancia EC2
             echo "APP_NAME=${{ secrets.APP_NAME_LOGIN }}" > /home/ec2-user/login-service.env
             echo "SERVER_PORT=${{ secrets.SERVER_PORT_LOGIN }}" >> /home/ec2-user/login-service.env
@@ -85,20 +108,24 @@ jobs:
             echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> /home/ec2-user/login-service.env
             echo "JWT_EXPIRATION=${{ secrets.JWT_EXPIRATION }}" >> /home/ec2-user/login-service.env
             echo "DOMINIO_URL=${{ secrets.DOMINIO_URL }}" >> /home/ec2-user/login-service.env
+            
             # Descargar la imagen Docker desde DockerHub
             echo "==> Pulling the latest Docker image"
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/login-service:latest
+            
             # Detener y eliminar cualquier contenedor existente
             if [ $(sudo docker ps -aq -f name=login-service) ]; then
               echo "==> Stopping and removing existing container"
               sudo docker stop login-service
               sudo docker rm login-service
             fi
+            
             # Ejecutar el nuevo contenedor con el archivo .env
             echo "==> Starting a new container"
             sudo docker run -d --name login-service -p 80:80 \
               --env-file /home/ec2-user/login-service.env \
               ${{ secrets.DOCKER_USERNAME }}/login-service:latest
+            
             # Validar si el contenedor está corriendo
             if sudo docker ps -f name=login-service | grep login-service; then
               echo "==> Container started successfully"

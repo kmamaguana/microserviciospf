@@ -122,7 +122,7 @@ jobs:
             
             # Ejecutar el nuevo contenedor con el archivo .env
             echo "==> Starting a new container"
-            sudo docker run -d --name login-service -p 80:80 \
+            sudo docker run -d --name login-service -p 80:${{ secrets.SERVER_PORT_LOGIN }} \
               --env-file /home/ec2-user/login-service.env \
               ${{ secrets.DOCKER_USERNAME }}/login-service:latest
             

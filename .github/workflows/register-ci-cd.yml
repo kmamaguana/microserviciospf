@@ -105,7 +105,7 @@ jobs:
 
             # Ejecutar el nuevo contenedor con el archivo .env
             echo "==> Starting a new container"
-            sudo docker run -d --name register-service -p 81:${{ secrets.SERVER_PORT_REGISTER }} \
+            sudo docker run -d --name register-service -p 80:${{ secrets.SERVER_PORT_REGISTER }} \
               --env-file /home/ec2-user/register-service.env \
               ${{ secrets.DOCKER_USERNAME }}/register-service:latest
 

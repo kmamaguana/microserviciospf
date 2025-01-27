@@ -1,5 +1,3 @@
-# HOLA MUNDO XD
-
 # PasswordResetFashionHub 🔒
 
 ## Descripción 📝

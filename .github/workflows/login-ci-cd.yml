@@ -4,13 +4,11 @@ on:
   push:
     paths:
       - 'user/login/**'
-    branches: [ "test" ]
+    branches: ["test"]
   pull_request:
     paths:
       - 'user/login/**'
-    branches: 
-      - "QA"
-      - "main"
+    branches: ["QA", "main"]
 
 jobs:
   build-and-push:
@@ -22,11 +20,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 2. Instalar JDK y Maven
+      # 2. Configurar JDK y Maven
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
-          java-version: '17'
+          java-version: '21'
           distribution: 'temurin'
 
       - name: Cache Maven dependencies
@@ -37,10 +35,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
-      # 3. Construir el archivo .jar con Maven usando variables de entorno
+      # 3. Construir el archivo .jar con Maven
       - name: Build .jar file
         run: mvn clean install -f user/login/pom.xml
-        env:
+        env: 
           APP_NAME: ${{ secrets.APP_NAME_LOGIN }}
           SERVER_PORT: ${{ secrets.SERVER_PORT_LOGIN }}
           DB_URL: ${{ secrets.DB_URL }}
@@ -57,7 +55,7 @@ jobs:
           JWT_EXPIRATION: ${{ secrets.JWT_EXPIRATION }}
           DOMINIO_URL: ${{ secrets.DOMINIO_URL }}
 
-      # 4. Log in en DockerHub
+      # 4. Iniciar sesión en DockerHub
       - name: Log in to DockerHub
         uses: docker/login-action@v2
         with:
@@ -67,7 +65,9 @@ jobs:
       # 5. Construir y subir la imagen Docker a DockerHub
       - name: Build and push Docker image
         run: |
-          docker build user/login/. --file user/login/Dockerfile --tag ${{ secrets.DOCKER_USERNAME }}/login-service:${{ github.run_number }} --tag ${{ secrets.DOCKER_USERNAME }}/login-service:latest
+          docker build user/login/. --file user/login/Dockerfile \
+            --tag ${{ secrets.DOCKER_USERNAME }}/login-service:${{ github.run_number }} \
+            --tag ${{ secrets.DOCKER_USERNAME }}/login-service:latest
           docker push ${{ secrets.DOCKER_USERNAME }}/login-service:${{ github.run_number }}
           docker push ${{ secrets.DOCKER_USERNAME }}/login-service:latest
 
@@ -77,37 +77,36 @@ jobs:
     needs: build-and-push
 
     steps:
-      # 1. Conectar a EC2 y desplegar la aplicación
+      # 1. Desplegar en EC2
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v0.1.6
         with:
-          host: ${{ secrets.EC2_HOST }}
+          host: ${{ secrets.EC2_HOST_LOGIN }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           port: 22
           script: |
-            # Actualizar y configurar Docker
-            sudo yum update -y
-            sudo yum install -y docker
-            sudo service docker start
-            sudo usermod -a -G docker ec2-user
-          
-            # Descargar la imagen Docker desde DockerHub
+            # Configurar Docker si no está instalado
+            if ! command -v docker &> /dev/null; then
+              echo "==> Installing Docker"
+              sudo yum update -y
+              sudo yum install -y docker
+              sudo service docker start
+              sudo usermod -a -G docker ec2-user
+            fi
+
+            # Descargar la última imagen Docker
             echo "==> Pulling the latest Docker image"
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/login-service:latest
-          
-            # Verificar si el contenedor existe
-            if [ $(sudo docker ps -aq -f name=login-service) ]; then
-              echo "==> Stopping and removing existing container"
-              sudo docker stop login-service || echo "Failed to stop container, possibly not running."
-              sudo docker rm login-service || echo "Failed to remove container, ensure it is stopped."
-            else
-              echo "==> No existing container found with the name 'login-service'"
-            fi
-          
-            # Iniciar un nuevo contenedor con la imagen más reciente
+
+            # Detener y eliminar contenedor existente si aplica
+            echo "==> Stopping and removing existing container (if exists)"
+            sudo docker stop login-service || true
+            sudo docker rm login-service || true
+
+            # Iniciar un nuevo contenedor
             echo "==> Starting a new container"
-            sudo docker run -d --name login-service -p 80:80 \
+            sudo docker run -d --name login-service -p 80:${{ secrets.SERVER_PORT_LOGIN }} \
               -e APP_NAME=${{ secrets.APP_NAME_LOGIN }} \
               -e SERVER_PORT=${{ secrets.SERVER_PORT_LOGIN }} \
               -e DB_URL=${{ secrets.DB_URL }} \
@@ -124,11 +123,13 @@ jobs:
               -e JWT_EXPIRATION=${{ secrets.JWT_EXPIRATION }} \
               -e DOMINIO_URL=${{ secrets.DOMINIO_URL }} \
               ${{ secrets.DOCKER_USERNAME }}/login-service:latest
-          
-            # Verificar si el contenedor está corriendo
+
+            # Verificar el estado del contenedor
+            echo "==> Verifying container status"
             if sudo docker ps -f name=login-service | grep login-service; then
-              echo "==> Container started successfully"
+              echo "==> Container is running successfully"
             else
-              echo "==> Failed to start the container. Check the Docker logs for details."
+              echo "==> Container failed to start. Check logs."
+              sudo docker logs login-service
               exit 1
             fi

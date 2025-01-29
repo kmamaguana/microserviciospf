@@ -33,7 +33,7 @@ jobs:
           --build-arg MONGO_URI=${{ secrets.MONGO_URI }} \
           --build-arg DB_NAME=${{ secrets.DB_NAME }} \
           --build-arg SERVER_PORT=${{ secrets.SERVER_PORT_CREATE_PRODUCT }} \
-          -t ${{ secrets.DOCKER_USERNAME }}/read-product-service:latest .
+          -t ${{ secrets.DOCKER_USERNAME }}/read-product-service:latest
 
     # Paso 4: Subir la imagen a Docker Hub
     - name: Push Docker image to Docker Hub

@@ -1,14 +1,13 @@
-
-name: Build, Push, and Deploy to EC2
+name: Docker Image CI/CD for Product Service - Create
 
 on:
   push:
     paths:
-      - 'user/login/**'
+      - 'catalog/readProductService/**'
     branches: ["test"]
   pull_request:
     paths:
-      - 'user/login/**'
+      - 'catalog/readProductService/**'
     branches: ["QA", "main"]
 
 jobs:
@@ -30,16 +29,16 @@ jobs:
     # Paso 3: Construir la imagen Docker usando los secrets
     - name: Build Docker image
       run: |
-        docker build catalog/createProductService/. --file catalog/createProductService/Dockerfile \
+        docker build catalog/readProductService/. --file catalog/readProductService/Dockerfile \
           --build-arg MONGO_URI=${{ secrets.MONGO_URI }} \
           --build-arg DB_NAME=${{ secrets.DB_NAME }} \
           --build-arg SERVER_PORT=${{ secrets.SERVER_PORT }} \
-          -t ${{ secrets.DOCKER_USERNAME }}/create-product-service:latest .
+          -t ${{ secrets.DOCKER_USERNAME }}/read-product-service:latest .
 
     # Paso 4: Subir la imagen a Docker Hub
     - name: Push Docker image to Docker Hub
       run: |
-        docker push ${{ secrets.DOCKER_USERNAME }}/create-product-service:latest
+        docker push ${{ secrets.DOCKER_USERNAME }}/read-product-service:latest
 
   deploy:
     needs: build
@@ -50,23 +49,23 @@ jobs:
     - name: Deploy to EC2
       uses: appleboy/ssh-action@v0.1.8
       with:
-        host: ${{ secrets.EC2_HOST }}
+        host: ${{ secrets.EC2_HOST_CREATE_PRODUCT }}
         username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
         port: 22
         script: |
           echo "Deteniendo y eliminando contenedor previo..."
-          docker stop create-product-service || true
-          docker rm create-product-service || true
+          docker stop read-product-service || true
+          docker rm read-product-service || true
           
           echo "Actualizando imagen desde Docker Hub..."
-          docker pull ${{ secrets.DOCKER_USERNAME }}/create-product-service:latest
+          docker pull ${{ secrets.DOCKER_USERNAME }}/read-product-service:latest
           
           echo "Ejecutando nuevo contenedor en el puerto 80..."
           docker run -d \
-            --name create-product-service \
-            -p 80:${{ secrets.SERVER_PORT }} \
+            --name read-product-service \
+            -p 80:${{ secrets.SERVER_PORT_CREATE_PRODUCT }} \
             -e MONGO_URI=${{ secrets.MONGO_URI }} \
             -e DB_NAME=${{ secrets.DB_NAME }} \
             -e SERVER_PORT=${{ secrets.SERVER_PORT }} \
-            ${{ secrets.DOCKER_USERNAME }}/create-product-service:latest
+            ${{ secrets.DOCKER_USERNAME }}/read-product-service:latest

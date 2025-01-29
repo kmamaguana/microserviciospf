@@ -29,16 +29,16 @@ jobs:
     # Paso 3: Construir la imagen Docker usando los secrets
     - name: Build Docker image
       run: |
-        docker build catalog/createProductService/. --file catalog/createProductService/Dockerfile \
+        docker build catalog/readProductService/. --file catalog/readProductService/Dockerfile \
           --build-arg MONGO_URI=${{ secrets.MONGO_URI }} \
           --build-arg DB_NAME=${{ secrets.DB_NAME }} \
           --build-arg SERVER_PORT=${{ secrets.SERVER_PORT_READ_PRODUCT }} \
-          -t ${{ secrets.DOCKER_USERNAME }}/create-product-service:latest
+          -t ${{ secrets.DOCKER_USERNAME }}/read-product-service:latest
 
     # Paso 4: Subir la imagen a Docker Hub
     - name: Push Docker image to Docker Hub
       run: |
-        docker push ${{ secrets.DOCKER_USERNAME }}/create-product-service:latest
+        docker push ${{ secrets.DOCKER_USERNAME }}/read-product-service:latest
 
   deploy:
     needs: build
@@ -63,18 +63,30 @@ jobs:
             sudo usermod -a -G docker ec2-user
           fi
 
+          # Detener y eliminar el contenedor previo si existe
           echo "Deteniendo y eliminando contenedor previo..."
-          sudo docker stop create-product-service || true
-          sudo docker rm create-product-service || true
+          sudo docker stop read-product-service || true
+          sudo docker rm read-product-service || true
           
+          # Descargar la última imagen desde Docker Hub
           echo "Actualizando imagen desde Docker Hub..."
-          sudo docker pull ${{ secrets.DOCKER_USERNAME }}/create-product-service:latest
+          sudo docker pull ${{ secrets.DOCKER_USERNAME }}/read-product-service:latest
           
-          echo "Ejecutando nuevo contenedor en el puerto 80..."
+          # Ejecutar el nuevo contenedor en el puerto 80
+          echo "Ejecutando nuevo contenedor en el puerto ${{
+            secrets.SERVER_PORT_READ_PRODUCT }}..."
           sudo docker run -d \
-            --name create-product-service \
+            --name read-product-service \
             -p 80:${{ secrets.SERVER_PORT_READ_PRODUCT }} \
             -e MONGO_URI=${{ secrets.MONGO_URI }} \
             -e DB_NAME=${{ secrets.DB_NAME }} \
             -e SERVER_PORT=${{ secrets.SERVER_PORT_READ_PRODUCT }} \
-            ${{ secrets.DOCKER_USERNAME }}/create-product-service:latest
+            ${{ secrets.DOCKER_USERNAME }}/read-product-service:latest
+
+          # Verificar que el contenedor esté corriendo
+          if sudo docker ps -f name=read-product-service | grep read-product-service; then
+            echo "Contenedor corriendo correctamente."
+          else
+            echo "Error al iniciar el contenedor. Revisa los logs."
+            exit 1
+          fi

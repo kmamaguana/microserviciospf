@@ -76,5 +76,5 @@ jobs:
             -p 80:${{ secrets.SERVER_PORT_CREATE_PRODUCT }} \
             -e MONGO_URI=${{ secrets.MONGO_URI }} \
             -e DB_NAME=${{ secrets.DB_NAME }} \
-            -e SERVER_PORT=${{ secrets.SERVER_PORT }} \
+            -e SERVER_PORT=${{ secrets.SERVER_PORT_CREATE_PRODUCT }} \
             ${{ secrets.DOCKER_USERNAME }}/read-product-service:latest

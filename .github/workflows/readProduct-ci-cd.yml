@@ -32,7 +32,7 @@ jobs:
         docker build catalog/createProductService/. --file catalog/createProductService/Dockerfile \
           --build-arg MONGO_URI=${{ secrets.MONGO_URI }} \
           --build-arg DB_NAME=${{ secrets.DB_NAME }} \
-          --build-arg SERVER_PORT=${{ secrets.SERVER_PORT }} \
+          --build-arg SERVER_PORT=${{ secrets.SERVER_PORT_READ_PRODUCT }} \
           -t ${{ secrets.DOCKER_USERNAME }}/create-product-service:latest .
 
     # Paso 4: Subir la imagen a Docker Hub

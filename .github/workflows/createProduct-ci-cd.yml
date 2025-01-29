@@ -54,6 +54,15 @@ jobs:
         key: ${{ secrets.EC2_SSH_KEY }}
         port: 22
         script: |
+          # Verificar si Docker está instalado
+          if ! command -v docker &> /dev/null; then
+            echo "==> Installing Docker"
+            sudo yum update -y
+            sudo yum install -y docker
+            sudo service docker start
+            sudo usermod -a -G docker ec2-user
+          fi
+
           echo "Deteniendo y eliminando contenedor previo..."
           docker stop read-product-service || true
           docker rm read-product-service || true

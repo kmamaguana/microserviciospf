@@ -64,14 +64,14 @@ jobs:
           fi
 
           echo "Deteniendo y eliminando contenedor previo..."
-          docker stop read-product-service || true
-          docker rm read-product-service || true
+          sudo docker stop read-product-service || true
+          sudo docker rm read-product-service || true
           
           echo "Actualizando imagen desde Docker Hub..."
-          docker pull ${{ secrets.DOCKER_USERNAME }}/read-product-service:latest
+          sudo docker pull ${{ secrets.DOCKER_USERNAME }}/read-product-service:latest
           
           echo "Ejecutando nuevo contenedor en el puerto 80..."
-          docker run -d \
+          sudo docker run -d \
             --name read-product-service \
             -p 80:${{ secrets.SERVER_PORT_CREATE_PRODUCT }} \
             -e MONGO_URI=${{ secrets.MONGO_URI }} \

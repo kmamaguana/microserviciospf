@@ -163,6 +163,7 @@ Este microservicio es parte de un ecosistema modular. Otros servicios pueden inc
 
 Todos los servicios pueden integrarse a través de un API Gateway para simplificar la interacción con el cliente.
 
-## Licencia
+## Licencia 
 
 Este proyecto está bajo la licencia [MIT](https://opensource.org/licenses/MIT).
+

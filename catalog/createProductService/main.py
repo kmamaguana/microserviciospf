@@ -39,4 +39,4 @@ def graphql_server():
 if __name__ == "__main__":
     print(f"GraphQL Server running at: http://localhost:{SERVER_PORT}/graphql")
     print(f"Swagger UI available at: http://localhost:{SERVER_PORT}/swagger-ui")
-    app.run(port=SERVER_PORT)
+    app.run(host='0.0.0.0', port=SERVER_PORT)

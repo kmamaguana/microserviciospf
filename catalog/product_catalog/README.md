@@ -1,3 +1,5 @@
+# HOLA MUNDO 4
+
 # Product Catalog - GraphQL API
 
 This project is a microservice for managing a product catalog, developed with Flask and Ariadne (GraphQL). It uses MongoDB as the database and follows a modular approach to facilitate maintenance and scalability. 📦

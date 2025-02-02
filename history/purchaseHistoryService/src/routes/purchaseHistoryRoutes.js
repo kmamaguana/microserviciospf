@@ -1,5 +1,6 @@
 const express = require('express');
-const { getPurchaseHistory } = require('../controllers/purchaseHistoryController');
+const PurchaseHistoryController = require('../controllers/purchaseHistoryController');
+
 const router = express.Router();
 
 /**
@@ -38,6 +39,6 @@ const router = express.Router();
  *       500:
  *         description: Internal server error
  */
-router.get('/', getPurchaseHistory);
+router.get('/', PurchaseHistoryController.getPurchaseHistory);
 
 module.exports = router;

@@ -59,10 +59,10 @@ const allowedOrigins = parseAllowedOrigins(process.env.ALLOWED_ORIGINS);
 
     // Start the Express app
     app.listen(process.env.SERVER_PORT, () => {
-      console.log(`🚀 GraphQL running at http://localhost:${process.env.SERVER_PORT}/graphql`);
-      console.log(`📄 Swagger docs available at http://localhost:${process.env.SERVER_PORT}/api-docs`);
+      console.log(`🚀 GraphQL corriendo en http://localhost:${process.env.SERVER_PORT}/graphql`);
+      console.log(`📄 Documentación Swagger disponible en http://localhost:${process.env.SERVER_PORT}/api-docs`);
     });
   } catch (error) {
-    console.error("❌ Error starting the server:", error.message);
+    console.error("❌ Error al iniciar el servidor:", error.message);
   }
 })();

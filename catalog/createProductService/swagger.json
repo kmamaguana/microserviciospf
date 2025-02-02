@@ -37,7 +37,16 @@
                 "properties": {
                   "query": {
                     "type": "string",
-                    "example": "mutation CreateProduct {\ncreateProduct(name:\"Camiseta deportiva\", price: 19.99, description: \"Camiseta 100% algodón\") {\n        id\n        name\n        description\n        price\n        stock\n        color\n        size\n        material\n        brand\n        gender\n    }\n}"
+                    "example": "mutation CreateProduct($imageFile: Upload) {\n    createProduct(\n        name: \"Vestido 1\",\n        price: 12.99,\n        description: \"Vestido prueba 1\",\n        color: \"rojo\",\n        size: \"XL\",\n        material: \"Algodon\",\n        brand: \"xd\",\n        gender: \"Mujer\",\n        stock: 50,\n        imageFile: $imageFile\n    ) {\n        id\n        name\n        description\n        price\n        stock\n        color\n        size\n        material\n        brand\n        gender\n        image_url\n    }\n}"
+                  },
+                  "variables": {
+                    "type": "object",
+                    "properties": {
+                      "imageFile": {
+                        "type": "string",
+                        "format": "binary"
+                      }
+                    }
                   }
                 },
                 "required": ["query"]
@@ -60,15 +69,16 @@
                           "type": "object",
                           "properties": {
                             "id": { "type": "string", "example": "12345" },
-                            "name": { "type": "string", "example": "Camiseta deportiva" },
-                            "description": { "type": "string", "example": "Camiseta 100% algodón" },
-                            "price": { "type": "number", "example": 19.99 },
-                            "stock": { "type": "integer", "example": 100 },
+                            "name": { "type": "string", "example": "Vestido 1" },
+                            "description": { "type": "string", "example": "Vestido prueba 1" },
+                            "price": { "type": "number", "example": 12.99 },
+                            "stock": { "type": "integer", "example": 50 },
                             "color": { "type": "string", "example": "Rojo" },
-                            "size": { "type": "string", "example": "M" },
+                            "size": { "type": "string", "example": "XL" },
                             "material": { "type": "string", "example": "Algodón" },
-                            "brand": { "type": "string", "example": "Nike" },
-                            "gender": { "type": "string", "example": "Unisex" }
+                            "brand": { "type": "string", "example": "xd" },
+                            "gender": { "type": "string", "example": "Mujer" },
+                            "image_url": { "type": "string", "example": "http://localhost:3005/catalog/products/12345/20250201_12345678.jpg" }
                           }
                         }
                       }

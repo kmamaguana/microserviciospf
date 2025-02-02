@@ -1,110 +1,117 @@
 
+# Order Status WebSocket Service
 
-### **README.md**
+This service allows you to check the status of an order in real-time via WebSocket. Clients can connect to the server and send an `orderId` to receive the status of the corresponding order.
 
-```markdown
-# Order Status API
+## Technologies Used
 
-Una API simple para consultar el estado de los pedidos. Esta API está construida con Express, MongoDB y Swagger para la documentación.
+- **Node.js**: JavaScript runtime for the server.
+- **Express**: Framework for managing the HTTP server.
+- **WebSocket (ws)**: For real-time communication between the client and the server.
+- **Mongoose**: For connecting to MongoDB and managing data.
+- **dotenv**: For securely handling environment variables.
+- **MongoDB**: NoSQL database for storing order information.
 
-## Descripción
+## Setup
 
-Esta API permite obtener el estado de un pedido dado su `orderId`. Utiliza un modelo de base de datos MongoDB para almacenar los pedidos y un servicio para recuperar su estado. La documentación de la API está disponible a través de Swagger UI.
+### 1. **Clone the repository**
 
-## Tecnologías utilizadas
+   Clone this repository to your local machine:
 
-- **Node.js**: Para el servidor y la lógica de la API.
-- **Express**: Framework para crear el servidor y manejar las rutas.
-- **MongoDB**: Base de datos NoSQL para almacenar los pedidos.
-- **Mongoose**: Para interactuar con MongoDB desde Node.js.
-- **Swagger**: Para la documentación interactiva de la API.
+   ```bash
+   git clone <repository_url>
+   ```
 
-## Instalación
+### 2. **Install dependencies**
 
-Sigue estos pasos para instalar y ejecutar el proyecto en tu máquina local.
+   Install the necessary dependencies:
 
-### Requisitos previos
+   ```bash
+   npm install
+   ```
 
-- Node.js
-- MongoDB (puede ser una instancia local o remota)
+### 3. **Configure environment variables**
 
-### Pasos para la instalación
+   Create a `.env` file in the root of the project with the following configuration:
 
-1. Clona el repositorio:
+   ```env
+   PORT=3014
+   DB_USER=root
+   DB_PASSWORD=example
+   DB_HOST=localhost
+   DB_PORT=27058
+   DB_NAME=messages
+   AUTH_SOURCE=admin
+   ```
 
-    ```bash
-    git clone https://github.com/tu-usuario/order-status-api.git
-    ```
+   Make sure to adjust the database credentials as needed.
 
-2. Navega a la carpeta del proyecto:
+### 4. **Start the server**
 
-    ```bash
-    cd order-status-api
-    ```
+   To start the server, run the following command:
 
-3. Instala las dependencias:
+   ```bash
+   npm start
+   ```
 
-    ```bash
-    npm install
-    ```
+   The WebSocket server will be available on the configured port (default is `3014`).
 
-4. Crea un archivo `.env` en la raíz del proyecto y agrega tus configuraciones de MongoDB:
+## File Structure
 
-    ```env
-    DB_USER=root
-    DB_PASSWORD=example
-    DB_HOST=localhost
-    DB_PORT=27058
-    DB_NAME=messages
-    AUTH_SOURCE=admin
+The project follows a layered architecture and employs **Clean Code** principles. Below are the key files and folders:
 
-    PORT=5000
-    ```
+- **`.env`**: Contains environment variables for port and database configuration.
+- **`src/app.js`**: Main file that configures the Express server and WebSocket server.
+- **`src/services/orderService.js`**: Logic for retrieving the order status from the database.
+- **`.gitignore`**: Excludes unnecessary files and folders (e.g., `node_modules` and `.env` file).
 
-5. Inicia el servidor:
+## Using WebSocket
 
-    ```bash
-    npm start
-    ```
+1. **Connect to the WebSocket server**
 
-El servidor debería estar corriendo en `http://localhost:5000`.
+   To connect to the WebSocket server, you can use any WebSocket client. If you're using **Postman** or **Insomnia**, you can configure a WebSocket connection with the URL:
 
-## Rutas disponibles
+   ```
+   ws://localhost:3014
+   ```
 
-### Obtener el estado de un pedido
+2. **Send a message with the `orderId`**
 
-- **URL**: `/api/order/{id}/status`
-- **Método**: `GET`
-- **Descripción**: Devuelve el estado de un pedido basado en su `orderId`.
-- **Parámetros**:
-  - `id` (path parameter): El `orderId` del pedido.
-- **Respuesta exitosa**:
-  ```json
-  {
-    "status": "Shipped"
-  }
-  ```
-- **Respuesta cuando no se encuentra el pedido**:
-  ```json
-  {
-    "message": "Order not found"
-  }
-  ```
+   Once connected to the WebSocket server, send a message with the `orderId` you want to check. The server will respond with the order status.
 
-## Documentación de la API
+   Example of a sent message:
+   ```json
+   "12345"
+   ```
 
-La documentación de la API está disponible a través de Swagger UI. Puedes acceder a ella en:
+3. **Receive the order status**
 
-```
-http://localhost:5000/api-docs
-```
+   The server will send a message with the order status. If the order is found, the response will be:
 
-## Contribuciones
+   ```json
+   {
+     "orderId": "12345",
+     "status": "Shipped"
+   }
+   ```
 
-Las contribuciones son bienvenidas. Si tienes alguna sugerencia o encuentras un error, por favor abre un *issue* o realiza un *pull request*.
+   If the order is not found, you will receive an error message:
 
-## Licencia
+   ```json
+   {
+     "error": "Order not found"
+   }
+   ```
 
-Este proyecto está licenciado bajo la [MIT License](LICENSE).
+## Important Files
+
+- **`.env`**: Contains environment variables for configuring the port and database.
+- **`src/app.js`**: Configures the Express server and manages WebSocket connections.
+- **`src/services/orderService.js`**: Contains the logic to retrieve the order status.
+- **`.gitignore`**: Excludes files and folders such as `node_modules` and `.env`.
+
+## License
+
+This project is licensed under the MIT License. See the `LICENSE` file for more details.
 ```
 

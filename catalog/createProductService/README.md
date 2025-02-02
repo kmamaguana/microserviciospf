@@ -1,5 +1,3 @@
-# HOLA MUNDO 5
-
 # 🚀 Products API
 
 This project is a **microservice** for managing products, designed using **Flask**, **GraphQL**, and **Swagger**. It allows operations related to products, such as **creating products**, using a flexible schema connected to a MongoDB database.
@@ -67,7 +65,9 @@ type Mutation {
         size: String,
         material: String,
         brand: String,
-        gender: String
+        gender: String,
+        stock: Int!,
+        imageFile: Upload
     ): Product
 }
 ```
@@ -75,17 +75,18 @@ type Mutation {
 **Mutation Example:**
 
 ```graphql
-mutation CreateProduct {
+mutation CreateProduct($imageFile: Upload) {
     createProduct(
-        name: "Sports T-shirt",
-        price: 19.99,
-        description: "100% cotton T-shirt",
-        stock: 100,
-        color: "Red",
-        size: "M",
-        material: "Cotton",
-        brand: "Nike",
-        gender: "Unisex"
+        name: "Vestido 1",
+        price: 12.99,
+        description: "Vestido prueba 1",
+        color: "rojo",
+        size: "XL",
+        material: "Algodon",
+        brand: "xd",
+        gender: "Mujer",
+        stock: 50,
+        imageFile: $imageFile
     ) {
         id
         name
@@ -97,7 +98,16 @@ mutation CreateProduct {
         material
         brand
         gender
+        image_url
     }
+}
+```
+
+**Variables Example** (for file upload):
+
+```json
+{
+  "imageFile": null
 }
 ```
 
@@ -108,15 +118,16 @@ mutation CreateProduct {
   "data": {
     "createProduct": {
       "id": "63f1e2a0d8e2e3b2a0f1c5e8",
-      "name": "Sports T-shirt",
-      "description": "100% cotton T-shirt",
-      "price": 19.99,
-      "stock": 100,
-      "color": "Red",
-      "size": "M",
-      "material": "Cotton",
-      "brand": "Nike",
-      "gender": "Unisex"
+      "name": "Vestido 1",
+      "description": "Vestido prueba 1",
+      "price": 12.99,
+      "stock": 50,
+      "color": "Rojo",
+      "size": "XL",
+      "material": "Algodón",
+      "brand": "xd",
+      "gender": "Mujer",
+      "image_url": "http://localhost:3005/catalog/products/12345/20250201_12345678.jpg"
     }
   }
 }
@@ -128,6 +139,69 @@ mutation CreateProduct {
 
 - **Swagger UI**: [http://localhost:3005/swagger-ui](http://localhost:3005/swagger-ui)
 - **GraphQL Playground**: [http://localhost:3005/graphql](http://localhost:3005/graphql)
+
+---
+
+## 🚀 Testing with Postman
+
+To test the `createProduct` mutation with **Postman**, follow these steps:
+
+1. Open **Postman** and create a new `POST` request to the endpoint `http://localhost:3005/graphql`.
+
+2. In the **Body** tab, select the `raw` option and choose `JSON` as the format. Then enter the following JSON in the body:
+
+```json
+{
+  "query": "mutation CreateProduct($imageFile: Upload) { createProduct(name: \"Vestido 1\", price: 12.99, description: \"Vestido prueba 1\", color: \"rojo\", size: \"XL\", material: \"Algodon\", brand: \"xd\", gender: \"Mujer\", stock: 50, imageFile: $imageFile) { id name description price stock color size material brand gender image_url } }",
+  "variables": {
+    "imageFile": null
+  }
+}
+```
+
+3. In the **Body** tab, add the `operations` and `map` fields as described below:
+
+```json
+{
+  "operations": {
+    "query": "mutation CreateProduct($imageFile: Upload) { createProduct(name: \"Vestido 1\", price: 12.99, description: \"Vestido prueba 1\", color: \"rojo\", size: \"XL\", material: \"Algodon\", brand: \"xd\", gender: \"Mujer\", stock: 50, imageFile: $imageFile) { id name description price stock color size material brand gender image_url } }",
+    "variables": {
+      "imageFile": null
+    }
+  },
+  "map": {
+    "0": ["variables.imageFile"]
+  }
+}
+```
+
+4. In the **Files** tab of Postman, add the image file under the key `0` (make sure it's a valid image file).
+
+5. Press **Send** to submit the request.
+
+**Expected Response:**
+
+```json
+{
+  "data": {
+    "createProduct": {
+      "id": "63f1e2a0d8e2e3b2a0f1c5e8",
+      "name": "Vestido 1",
+      "description": "Vestido prueba 1",
+      "price": 12.99,
+      "stock": 50,
+      "color": "Rojo",
+      "size": "XL",
+      "material": "Algodón",
+      "brand": "xd",
+      "gender": "Mujer",
+      "image_url": "http://localhost:3005/catalog/products/12345/20250201_12345678.jpg"
+    }
+  }
+}
+```
+
+You should now see the new product details along with the `image_url` where the image has been uploaded.
 
 ---
 

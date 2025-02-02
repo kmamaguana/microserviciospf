@@ -6,18 +6,18 @@ const orderController = require('../controllers/orderController');
  * @swagger
  * /api/order/{id}/status:
  *   get:
- *     summary: Obtener el estado de un pedido por su ID
- *     description: Devuelve el estado de un pedido dado su ID único
+ *     summary: Retrieve the status of an order by ID
+ *     description: Fetch the status of an order using its unique orderId
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         description: El ID del pedido
+ *         description: The unique identifier for the order
  *         schema:
  *           type: string
  *     responses:
  *       200:
- *         description: El estado del pedido
+ *         description: Order status returned
  *         content:
  *           application/json:
  *             schema:
@@ -27,9 +27,7 @@ const orderController = require('../controllers/orderController');
  *                   type: string
  *                   example: Shipped
  *       404:
- *         description: Pedido no encontrado
- *       500:
- *         description: Error en el servidor
+ *         description: Order not found
  */
 router.get('/order/:id/status', orderController.getOrderStatus);
 

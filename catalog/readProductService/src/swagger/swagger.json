@@ -2,36 +2,36 @@
   "openapi": "3.0.0",
   "info": {
     "title": "GraphQL Product Service API",
-    "description": "This API allows you to interact with the Product database using GraphQL. You can fetch product details, execute queries, and mutations with the GraphQL endpoint.",
+    "description": "Esta API permite interactuar con la base de datos de productos usando GraphQL. Puedes obtener detalles de productos y ejecutar consultas y mutaciones con el endpoint de GraphQL.",
     "version": "1.1.0",
     "termsOfService": "https://example.com/terms",
     "contact": {
-      "name": "Developer Support",
+      "name": "Soporte para Desarrolladores",
       "email": "support@example.com",
       "url": "https://example.com/support"
     },
     "license": {
-      "name": "MIT License",
+      "name": "Licencia MIT",
       "url": "https://opensource.org/licenses/MIT"
     }
   },
   "servers": [
     {
       "url": "http://localhost:3006/graphql",
-      "description": "Local development server"
+      "description": "Servidor local de desarrollo"
     },
     {
       "url": "https://api.example.com/graphql",
-      "description": "Production server"
+      "description": "Servidor de producción"
     }
   ],
   "paths": {
     "/graphql": {
       "post": {
-        "summary": "Execute GraphQL queries or mutations",
-        "description": "Send a GraphQL query or mutation string to the GraphQL endpoint.",
+        "summary": "Ejecutar consultas o mutaciones de GraphQL",
+        "description": "Envía una consulta o mutación GraphQL al endpoint.",
         "requestBody": {
-          "description": "GraphQL query or mutation string with optional variables.",
+          "description": "Cadena de consulta o mutación GraphQL con variables opcionales.",
           "required": true,
           "content": {
             "application/json": {
@@ -40,12 +40,12 @@
                 "properties": {
                   "query": {
                     "type": "string",
-                    "description": "GraphQL query or mutation string.",
-                    "example": "{ listProducts { id name price } }"
+                    "description": "Cadena de consulta o mutación GraphQL.",
+                    "example": "{ listProducts { id name price image_url } }"
                   },
                   "variables": {
                     "type": "object",
-                    "description": "Optional variables for the query or mutation.",
+                    "description": "Variables opcionales para la consulta o mutación.",
                     "example": { "id": "1" }
                   }
                 }
@@ -55,7 +55,7 @@
         },
         "responses": {
           "200": {
-            "description": "Successful GraphQL response.",
+            "description": "Respuesta exitosa de GraphQL.",
             "content": {
               "application/json": {
                 "schema": {
@@ -65,7 +65,7 @@
             }
           },
           "400": {
-            "description": "Bad request due to invalid GraphQL syntax or missing required fields.",
+            "description": "Solicitud incorrecta debido a sintaxis GraphQL inválida o campos faltantes.",
             "content": {
               "application/json": {
                 "schema": {
@@ -75,7 +75,7 @@
             }
           },
           "500": {
-            "description": "Internal server error due to an unexpected issue.",
+            "description": "Error interno del servidor debido a un problema inesperado.",
             "content": {
               "application/json": {
                 "schema": {
@@ -92,34 +92,35 @@
     "schemas": {
       "Product": {
         "type": "object",
-        "description": "A single product in the database.",
+        "description": "Un solo producto en la base de datos.",
         "properties": {
-          "id": { "type": "string", "description": "The unique identifier of the product." },
-          "name": { "type": "string", "description": "The name of the product." },
-          "description": { "type": "string", "description": "A detailed description of the product." },
-          "price": { "type": "number", "description": "The price of the product in USD." },
-          "stock": { "type": "integer", "description": "The quantity of the product in stock." },
-          "color": { "type": "string", "description": "The color of the product." },
-          "size": { "type": "string", "description": "The size of the product." },
-          "material": { "type": "string", "description": "The material of the product." },
-          "brand": { "type": "string", "description": "The brand of the product." },
-          "gender": { "type": "string", "description": "The target gender for the product." }
+          "id": { "type": "string", "description": "El identificador único del producto." },
+          "name": { "type": "string", "description": "El nombre del producto." },
+          "description": { "type": "string", "description": "Descripción detallada del producto." },
+          "price": { "type": "number", "description": "El precio del producto en USD." },
+          "stock": { "type": "integer", "description": "La cantidad de productos en stock." },
+          "color": { "type": "string", "description": "El color del producto." },
+          "size": { "type": "string", "description": "El tamaño del producto." },
+          "material": { "type": "string", "description": "El material del producto." },
+          "brand": { "type": "string", "description": "La marca del producto." },
+          "gender": { "type": "string", "description": "El género al que está dirigido el producto." },
+          "image_url": { "type": "string", "description": "URL de la imagen del producto." }
         }
       },
       "GraphQLResponse": {
         "type": "object",
-        "description": "The standard structure of a GraphQL response.",
+        "description": "Estructura estándar de la respuesta de GraphQL.",
         "properties": {
           "data": {
             "type": "object",
-            "description": "The result of the GraphQL query or mutation.",
+            "description": "El resultado de la consulta o mutación GraphQL.",
             "properties": {
               "listProducts": {
                 "type": "array",
                 "items": {
                   "$ref": "#/components/schemas/Product"
                 },
-                "description": "An array of products returned by the query."
+                "description": "Lista de productos devueltos por la consulta."
               }
             }
           }
@@ -127,8 +128,8 @@
         "example": {
           "data": {
             "listProducts": [
-              { "id": "1", "name": "Product A", "price": 100 },
-              { "id": "2", "name": "Product B", "price": 200 }
+              { "id": "1", "name": "Producto A", "price": 100, "image_url": "http://localhost:3006/products/1.jpg" },
+              { "id": "2", "name": "Producto B", "price": 200, "image_url": "http://localhost:3006/products/2.jpg" }
             ]
           }
         }
@@ -137,7 +138,7 @@
     "responses": {
       "BadRequestResponse": {
         "type": "object",
-        "description": "Error response for invalid GraphQL syntax or missing required fields.",
+        "description": "Respuesta de error por sintaxis GraphQL inválida o campos faltantes.",
         "properties": {
           "errors": {
             "type": "array",
@@ -146,7 +147,7 @@
               "properties": {
                 "message": {
                   "type": "string",
-                  "example": "Invalid GraphQL query syntax."
+                  "example": "Sintaxis de consulta GraphQL inválida."
                 }
               }
             }
@@ -156,7 +157,7 @@
       },
       "InternalServerError": {
         "type": "object",
-        "description": "Error response for unexpected server issues.",
+        "description": "Respuesta de error para problemas internos del servidor.",
         "properties": {
           "errors": {
             "type": "array",
@@ -165,7 +166,7 @@
               "properties": {
                 "message": {
                   "type": "string",
-                  "example": "Internal server error."
+                  "example": "Error interno del servidor."
                 }
               }
             }

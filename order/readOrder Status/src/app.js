@@ -1,46 +1,53 @@
 const express = require('express');
-const app = express();
+const WebSocket = require('ws');
+const dotenv = require('dotenv');
 const connectDB = require('./utils/db');
-const orderRoutes = require('./routes/orderRoutes');
+const orderService = require('./services/orderService');
 
-// Swagger Setup
-const swaggerJsDoc = require('swagger-jsdoc');
-const swaggerUi = require('swagger-ui-express');
+// Cargar las variables de entorno desde el archivo .env
+dotenv.config();
 
-// Conectar a la base de datos
+// Crear una aplicación Express (aún para otros usos)
+const app = express();
 connectDB();
 
-// Configuración de Swagger
-const swaggerOptions = {
-  swaggerDefinition: {
-    info: {
-      title: 'Order Status API',
-      description: 'API para obtener el estado de los pedidos',
-      version: '1.0.0',
-    },
-    servers: [
-      {
-        url: 'http://localhost:5000',
-      },
-    ],
-  },
-  apis: ['./routes/*.js'], // Rutas que contienen las definiciones de los endpoints
-};
+// Crear el servidor WebSocket
+const wss = new WebSocket.Server({ noServer: true });
 
-const swaggerDocs = swaggerJsDoc(swaggerOptions);
+// Escuchar conexiones WebSocket
+wss.on('connection', (ws) => {
+  console.log('Cliente conectado');
+  
+  // Recibir mensajes desde el cliente
+  ws.on('message', (message) => {
+    console.log('Mensaje recibido: ', message);
+    
+    // Procesar el mensaje (esperamos que el mensaje sea un ID de pedido)
+    const orderId = message;
 
-// Middleware de Swagger
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+    // Obtener el estado del pedido
+    orderService.getOrderStatus(orderId)
+      .then(status => {
+        // Enviar la respuesta al cliente
+        ws.send(JSON.stringify({ orderId, status }));
+      })
+      .catch(err => {
+        ws.send(JSON.stringify({ error: 'Pedido no encontrado' }));
+      });
+  });
 
-// Middleware
-app.use(express.json());
+  // Enviar un mensaje al cliente cuando se conecte
+  ws.send(JSON.stringify({ message: 'Conexión establecida. Envíame un ID de pedido.' }));
+});
 
-// Rutas
-app.use('/api', orderRoutes);
+// Configurar el servidor Express para usar WebSocket
+const server = app.listen(process.env.PORT, () => {
+  console.log(`Servidor Express corriendo en el puerto ${process.env.PORT}`);
+});
 
-// Iniciar el servidor
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Servidor corriendo en el puerto ${PORT}`);
-  console.log(`Documentación Swagger disponible en http://localhost:${PORT}/api-docs`);
+// Manejar la actualización de WebSocket
+server.on('upgrade', (request, socket, head) => {
+  wss.handleUpgrade(request, socket, head, (ws) => {
+    wss.emit('connection', ws, request);
+  });
 });

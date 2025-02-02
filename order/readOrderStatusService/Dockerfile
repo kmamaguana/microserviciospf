@@ -1,24 +1,23 @@
-# Use an official Node.js runtime as a parent image
+# Usa una imagen base oficial de Node.js
 FROM node:18
 
-# Set the working directory in the container
+# Configura el directorio de trabajo dentro del contenedor
 WORKDIR /usr/src/app
 
-# Copy the package.json and package-lock.json
+# Copia el archivo `package.json` y `package-lock.json` al contenedor
 COPY package*.json ./
 
-# Install dependencies
+# Instala las dependencias del proyecto
 RUN npm install
 
-# Copy the rest of the application files
+# Copia el código de la aplicación al contenedor
 COPY . .
 
-# Expose the port the app will run on
+# Expone el puerto en el que el servidor estará corriendo
 EXPOSE 3014
 
-# Define environment variables (optional)
-ENV NODE_ENV=production
-ENV PORT=3014
+# Instala `dotenv` para cargar el archivo .env
+RUN npm install dotenv
 
-# Start the server
+# Ejecuta el servidor
 CMD ["npm", "start"]

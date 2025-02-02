@@ -4,17 +4,16 @@
 # Logs
 *.log
 
-# Environment files
+# Archivos de entorno
 .env
 
-# .env files created by dotenv
+# .env archivos creados por dotenv
 .env.local
 .env.*.local
 
 # npm packages
 /package-lock.json
 
-# OS generated files
+# Archivos generados por el sistema operativo
 .DS_Store
 Thumbs.db
-

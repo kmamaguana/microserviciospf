@@ -1,0 +1,153 @@
+name: Docker Image CI/CD for Messaging Services
+
+on:
+  push:
+    paths:
+      - 'messaging/**'
+    branches: ["test"]
+  pull_request:
+    paths:
+      - 'messaging/**'
+    branches: ["QA", "main"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Build and push listenMessageChatService Docker image
+      run: |
+        docker build messaging/listenMessageChatService/. --file messaging/listenMessageChatService/Dockerfile \
+          --build-arg DB_USER=${{ secrets.MONGO_DB_USER }} \
+          --build-arg DB_PASSWORD=${{ secrets.MONGO_DB_PASSWORD }} \
+          --build-arg DB_HOST=${{ secrets.MONGO_DB_HOST }} \
+          --build-arg DB_PORT=${{ secrets.MONGO_DB_PORT }} \
+          --build-arg DB_NAME=${{ secrets.MONGO_DB_NAME }} \
+          --build-arg AUTH_SOURCE=${{ secrets.MONGO_AUTH_SOURCE }} \
+          --build-arg PORT=${{ secrets.SERVICE_PORT }} \
+          -t ${{ secrets.DOCKER_USERNAME }}/listen-message-chat-service:latest
+
+    - name: Build and push createMessageChatService Docker image
+      run: |
+        docker build messaging/createMessageChatService/. --file messaging/createMessageChatService/Dockerfile \
+          --build-arg DB_USER=${{ secrets.MONGO_DB_USER }} \
+          --build-arg DB_PASSWORD=${{ secrets.MONGO_DB_PASSWORD }} \
+          --build-arg DB_HOST=${{ secrets.MONGO_DB_HOST }} \
+          --build-arg DB_PORT=${{ secrets.MONGO_DB_PORT }} \
+          --build-arg DB_NAME=${{ secrets.MONGO_DB_NAME }} \
+          --build-arg AUTH_SOURCE=${{ secrets.MONGO_AUTH_SOURCE }} \
+          --build-arg PORT=${{ secrets.SERVICE_PORT }} \
+          --build-arg WS_URL=http://${{ secrets.EC2_HOST_CREATE }} \
+          -t ${{ secrets.DOCKER_USERNAME }}/create-message-chat-service:latest
+
+    - name: Push Docker images to Docker Hub
+      run: |
+        docker push ${{ secrets.DOCKER_USERNAME }}/listen-message-chat-service:latest
+        docker push ${{ secrets.DOCKER_USERNAME }}/create-message-chat-service:latest
+
+  deploy_listen:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Deploy listenMessageChatService to EC2
+      uses: appleboy/ssh-action@v0.1.8
+      with:
+        host: ${{ secrets.EC2_HOST_LISTEN }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        port: 22
+        script: |
+          if ! command -v docker &> /dev/null; then
+            echo "==> Installing Docker"
+            sudo yum update -y
+            sudo yum install -y docker
+            sudo service docker start
+            sudo usermod -a -G docker ec2-user
+          fi
+
+          echo "Stopping and removing old container..."
+          sudo docker stop listen-message-chat-service || true
+          sudo docker rm listen-message-chat-service || true
+          
+          echo "Pulling latest listen-message-chat-service image..."
+          sudo docker pull ${{ secrets.DOCKER_USERNAME }}/listen-message-chat-service:latest
+
+          echo "Running listenMessageChatService container..."
+          sudo docker run -d \
+            --name listen-message-chat-service \
+            -p 3019:3019 \
+            -e DB_USER=${{ secrets.MONGO_DB_USER }} \
+            -e DB_PASSWORD=${{ secrets.MONGO_DB_PASSWORD }} \
+            -e DB_HOST=${{ secrets.MONGO_DB_HOST }} \
+            -e DB_PORT=${{ secrets.MONGO_DB_PORT }} \
+            -e DB_NAME=${{ secrets.MONGO_DB_NAME }} \
+            -e AUTH_SOURCE=${{ secrets.MONGO_AUTH_SOURCE }} \
+            -e PORT=${{ secrets.SERVICE_PORT }} \
+            -e WS_URL=${{ secrets.WEBSOCKET_URL }} \
+            ${{ secrets.DOCKER_USERNAME }}/listen-message-chat-service:latest
+
+          if sudo docker ps -f name=listen-message-chat-service | grep listen-message-chat-service; then
+            echo "Container for listenMessageChatService is running correctly."
+          else
+            echo "Error starting the container."
+            exit 1
+          fi
+
+  deploy_create:
+    needs: deploy_listen
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Deploy createMessageChatService to EC2
+      uses: appleboy/ssh-action@v0.1.8
+      with:
+        host: ${{ secrets.EC2_HOST_CREATE }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        port: 22
+        script: |
+          if ! command -v docker &> /dev/null; then
+            echo "==> Installing Docker"
+            sudo yum update -y
+            sudo yum install -y docker
+            sudo service docker start
+            sudo usermod -a -G docker ec2-user
+          fi
+
+          echo "Stopping and removing old container..."
+          sudo docker stop create-message-chat-service || true
+          sudo docker rm create-message-chat-service || true
+          
+          echo "Pulling latest create-message-chat-service image..."
+          sudo docker pull ${{ secrets.DOCKER_USERNAME }}/create-message-chat-service:latest
+
+          echo "Running createMessageChatService container..."
+          sudo docker run -d \
+            --name create-message-chat-service \
+            -p 3018:3018 \
+            -e DB_USER=${{ secrets.MONGO_DB_USER }} \
+            -e DB_PASSWORD=${{ secrets.MONGO_DB_PASSWORD }} \
+            -e DB_HOST=${{ secrets.MONGO_DB_HOST }} \
+            -e DB_PORT=${{ secrets.MONGO_DB_PORT }} \
+            -e DB_NAME=${{ secrets.MONGO_DB_NAME }} \
+            -e AUTH_SOURCE=${{ secrets.MONGO_AUTH_SOURCE }} \
+            -e PORT=${{ secrets.SERVICE_PORT }} \
+            -e WS_URL=${{ secrets.WEBSOCKET_URL }} \
+            ${{ secrets.DOCKER_USERNAME }}/create-message-chat-service:latest
+
+          if sudo docker ps -f name=create-message-chat-service | grep create-message-chat-service; then
+            echo "Container for createMessageChatService is running correctly."
+          else
+            echo "Error starting the container."
+            exit 1
+          fi

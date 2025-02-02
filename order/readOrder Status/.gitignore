@@ -1,0 +1,19 @@
+# Node modules
+/node_modules/*
+
+# Logs
+*.log
+
+# Archivos de entorno
+.env
+
+# .env archivos creados por dotenv
+.env.local
+.env.*.local
+
+# npm packages
+/package-lock.json
+
+# Archivos generados por el sistema operativo
+.DS_Store
+Thumbs.db

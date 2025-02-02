@@ -5,7 +5,7 @@ const getOrderStatus = async (orderId) => {
     const order = await Order.findOne({ orderId });
     return order ? order.status : null;
   } catch (error) {
-    throw new Error('Error fetching order status: ' + error.message);
+    throw new Error('Error al obtener el estado del pedido');
   }
 };
 

@@ -1,11 +1,17 @@
-const Order = require('../models/orderModel');
+const orderService = require('../services/orderService');
 
-const getOrderStatus = async (orderId) => {
+const getOrderStatus = async (req, res, next) => {
+  const { id } = req.params;
+  
   try {
-    const order = await Order.findOne({ orderId });
-    return order ? order.status : null;
+    const orderStatus = await orderService.getOrderStatus(id);
+    if (orderStatus) {
+      res.status(200).json({ status: orderStatus });
+    } else {
+      res.status(404).json({ message: 'Order not found' });
+    }
   } catch (error) {
-    throw new Error('Error al obtener el estado del pedido');
+    next(error);
   }
 };
 

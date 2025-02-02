@@ -33,6 +33,10 @@ jobs:
           --build-arg MONGO_URI=${{ secrets.MONGO_URI }} \
           --build-arg DB_NAME=${{ secrets.DB_NAME }} \
           --build-arg SERVER_PORT=${{ secrets.SERVER_PORT_CREATE_PRODUCT }} \
+          --build-arg AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID_S3 }} \
+          --build-arg AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY_S3 }} \
+          --build-arg S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }} \
+          --build-arg AWS_REGION=${{ secrets.AWS_REGION_S3 }} \
           -t ${{ secrets.DOCKER_USERNAME }}/create-product-service:latest
 
     # Paso 4: Subir la imagen a Docker Hub
@@ -81,6 +85,10 @@ jobs:
             -e MONGO_URI=${{ secrets.MONGO_URI }} \
             -e DB_NAME=${{ secrets.DB_NAME }} \
             -e SERVER_PORT=${{ secrets.SERVER_PORT_CREATE_PRODUCT }} \
+            -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID_S3 }} \
+            -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY_S3 }} \
+            -e S3_BUCKET_NAME=${{ secrets.S3_BUCKET_NAME }} \
+            -e AWS_REGION=${{ secrets.AWS_REGION_S3 }} \
             ${{ secrets.DOCKER_USERNAME }}/create-product-service:latest
 
           # Verificar que el contenedor esté corriendo

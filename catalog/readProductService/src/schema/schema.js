@@ -19,6 +19,7 @@ const typeDefs = gql`
     material: String
     brand: String
     gender: String
+    image_url: String  # Nuevo campo para la URL de la imagen
   }
 `;
 

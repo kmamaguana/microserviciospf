@@ -1,8 +1,9 @@
 from ariadne import gql
 
 type_defs = gql("""
+    scalar Upload  # 🚀 Esto permite subir archivos
+
     type Query {
-        # Define campos aquí si necesitas consultas en el futuro
         _empty: String
     }
 
@@ -11,11 +12,13 @@ type_defs = gql("""
             name: String!,
             price: Float!,
             description: String,
+            stock: Int!,
             color: String,
             size: String,
             material: String,
             brand: String,
-            gender: String
+            gender: String,
+            imageFile: Upload
         ): Product
     }
 
@@ -30,5 +33,6 @@ type_defs = gql("""
         material: String
         brand: String
         gender: String
+        image_url: String
     }
 """)

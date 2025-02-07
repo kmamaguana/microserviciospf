@@ -1,0 +1,58 @@
+# Python
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.db
+*.sqlite3
+*.egg
+*.egg-info
+dist/
+build/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.manifest
+*.spec
+
+# Entorno virtual
+.venv/
+venv/
+ENV/
+env/
+.uce/
+
+# Docker
+*.log
+docker-compose.override.yml
+docker-compose.yml
+Dockerfile
+
+# Archivos de configuración de IDEs
+.vscode/
+.idea/
+
+# Archivos de configuración de PyCharm
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Archivos temporales de editor
+*~
+*.swp
+
+# Archivos de la base de datos
+*.sql
+*.dump
+
+# Archivos generados por el sistema operativo
+.DS_Store
+Thumbs.db
+
+# Archivos de entorno
+.env
